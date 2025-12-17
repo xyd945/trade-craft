@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getChatCompletion, ChatMessage, ChartContext } from "@/lib/llm/openaiClient";
 
+// Force Node.js runtime (not Edge) for better compatibility
+export const runtime = "nodejs";
+
+// Helper to add CORS headers
+function corsHeaders() {
+    return {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+    };
+}
+
+// Handle OPTIONS for CORS preflight
+export async function OPTIONS() {
+    return NextResponse.json({}, { headers: corsHeaders() });
+}
+
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
@@ -75,7 +92,7 @@ In the meantime, you can explore the chart manually using the controls above. Tr
                     },
                 ],
                 actions: [],
-            });
+            }, { headers: corsHeaders() });
         }
 
         // Get completion from LLM
@@ -90,12 +107,12 @@ In the meantime, you can explore the chart manually using the controls above. Tr
             hasLessonOptions: !!result.lessonOptions?.length,
         });
 
-        return NextResponse.json(result);
+        return NextResponse.json(result, { headers: corsHeaders() });
     } catch (error) {
         console.error("[Chat API Error]", error);
         return NextResponse.json(
-            { error: "Failed to process chat request" },
-            { status: 500 }
+            { error: "Failed to process chat request", details: String(error) },
+            { status: 500, headers: corsHeaders() }
         );
     }
 }
